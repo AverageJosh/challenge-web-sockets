@@ -55,11 +55,11 @@ export default function Chat({ username }: ChatProps) {
     webSocket.onmessage = (event) => {
       try {
         const message = JSON.parse(event.data);
-        let newMessage: Message;
+        let nextMessage: Message;
 
         switch (message.type) {
           case "message":
-            newMessage = {
+            nextMessage = {
               id: message.id,
               username: message.username,
               message: message.message,
@@ -68,7 +68,7 @@ export default function Chat({ username }: ChatProps) {
             };
             break;
           case "announcement":
-            newMessage = {
+            nextMessage = {
               id: message.id,
               username: message.username,
               message: message.message,
@@ -77,26 +77,26 @@ export default function Chat({ username }: ChatProps) {
             };
             break;
           case "userJoined":
-            newMessage = {
+            nextMessage = {
               id: message.id,
               username: message.username,
-              message: `${username} joined the chat`,
+              message: `${message.username} joined the chat`,
               timestamp: message.timestamp,
               type: "announcement",
             };
             break;
           case "userLeft":
-            newMessage = {
+            nextMessage = {
               id: message.id,
               username: message.username,
-              message: `${username} left the chat`,
+              message: `${message.username} left the chat`,
               timestamp: message.timestamp,
               type: "announcement",
             };
             break;
         }
 
-        setMessages((prevMessages) => [...prevMessages, message]);
+        setMessages((prevMessages) => [...prevMessages, nextMessage]);
       } catch (error) {
         console.error("Error parsing message:", error);
       }
@@ -152,9 +152,9 @@ export default function Chat({ username }: ChatProps) {
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
-        {messages.map((msg) => (
+        {messages.map((msg, idx) => (
           <div
-            key={msg.id}
+            key={msg.id + idx}
             className={`flex ${
               msg.username === username ? "justify-end" : "justify-start"
             }`}
