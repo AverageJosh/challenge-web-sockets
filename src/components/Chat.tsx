@@ -57,10 +57,13 @@ export default function Chat({ username }: ChatProps) {
         const message = JSON.parse(event.data);
         let nextMessage: Message;
 
+        console.log(message);
+        const fallbackId = Date.now() + Math.random();
+
         switch (message.type) {
           case "message":
             nextMessage = {
-              id: message.id,
+              id: message.id ?? fallbackId,
               username: message.username,
               message: message.message,
               timestamp: message.timestamp,
@@ -69,7 +72,7 @@ export default function Chat({ username }: ChatProps) {
             break;
           case "announcement":
             nextMessage = {
-              id: message.id,
+              id: message.id ?? fallbackId,
               username: message.username,
               message: message.message,
               timestamp: message.timestamp,
@@ -78,18 +81,18 @@ export default function Chat({ username }: ChatProps) {
             break;
           case "userJoined":
             nextMessage = {
-              id: message.id,
+              id: message.id ?? fallbackId,
               username: message.username,
-              message: `${message.username} joined the chat`,
+              message: message.message,
               timestamp: message.timestamp,
               type: "announcement",
             };
             break;
           case "userLeft":
             nextMessage = {
-              id: message.id,
+              id: message.id ?? fallbackId,
               username: message.username,
-              message: `${message.username} left the chat`,
+              message: message.message,
               timestamp: message.timestamp,
               type: "announcement",
             };
@@ -133,6 +136,7 @@ export default function Chat({ username }: ChatProps) {
     });
   };
 
+  console.log(messages);
   return (
     <div className="flex flex-col h-screen max-w-2xl mx-auto bg-white">
       {/* Header */}
@@ -152,9 +156,9 @@ export default function Chat({ username }: ChatProps) {
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
-        {messages.map((msg, idx) => (
+        {messages.map((msg) => (
           <div
-            key={msg.id + idx}
+            key={msg.id}
             className={`flex ${
               msg.username === username ? "justify-end" : "justify-start"
             }`}

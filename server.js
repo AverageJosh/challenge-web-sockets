@@ -40,6 +40,7 @@ app.prepare().then(() => {
     ws.on("message", (data) => {
       try {
         const message = JSON.parse(data);
+        const id = Date.now() + Math.random();
 
         switch (message.type) {
           case "join":
@@ -49,8 +50,8 @@ app.prepare().then(() => {
               if (client !== ws && client.readyState === WebSocket.OPEN) {
                 client.send(
                   JSON.stringify({
-                    id: Date.now(),
                     type: "userJoined",
+                    id: id,
                     username: message.username,
                     message: `${message.username} joined the chat`,
                     timestamp: new Date().toISOString(),
@@ -65,7 +66,7 @@ app.prepare().then(() => {
             const username = clients.get(ws) || "Anonymous";
             const messageData = {
               type: "message",
-              id: Date.now(),
+              id: id,
               username,
               message: message.message,
               timestamp: new Date().toISOString(),
@@ -94,8 +95,8 @@ app.prepare().then(() => {
         if (client.readyState === WebSocket.OPEN) {
           client.send(
             JSON.stringify({
-              id: Date.now(),
               type: "userLeft",
+              id: Date.now() + Math.random(),
               username: username,
               message: `${username} left the chat`,
               timestamp: new Date().toISOString(),
