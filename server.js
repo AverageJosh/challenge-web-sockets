@@ -1,10 +1,10 @@
-const { createServer } = require('http');
-const { parse } = require('url');
-const next = require('next');
-const WebSocket = require('ws');
+const { createServer } = require("http");
+const { parse } = require("url");
+const next = require("next");
+const WebSocket = require("ws");
 
-const dev = process.env.NODE_ENV !== 'production';
-const hostname = 'localhost';
+const dev = process.env.NODE_ENV !== "production";
+const hostname = "localhost";
 const port = process.env.PORT || 3000;
 const wsPort = 3001; // Separate port for WebSocket server
 
@@ -18,9 +18,9 @@ app.prepare().then(() => {
       const parsedUrl = parse(req.url, true);
       await handle(req, res, parsedUrl);
     } catch (err) {
-      console.error('Error occurred handling', req.url, err);
+      console.error("Error occurred handling", req.url, err);
       res.statusCode = 500;
-      res.end('internal server error');
+      res.end("internal server error");
     }
   });
 
@@ -34,38 +34,44 @@ app.prepare().then(() => {
   const wss = new WebSocket.Server({ server: wsServer });
   const clients = new Map(); // Map to store client connections with usernames
 
-  wss.on('connection', (ws) => {
-    console.log('Client connected:', ws._socket.remoteAddress);
+  wss.on("connection", (ws) => {
+    console.log("Client connected:", ws._socket.remoteAddress);
 
-    ws.on('message', (data) => {
+    ws.on("message", (data) => {
       try {
         const message = JSON.parse(data);
-        
+        const id = Date.now() + Math.random();
+
         switch (message.type) {
-          case 'join':
+          case "join":
             clients.set(ws, message.username);
             // Broadcast user joined to all other clients
             wss.clients.forEach((client) => {
               if (client !== ws && client.readyState === WebSocket.OPEN) {
-                client.send(JSON.stringify({
-                  type: 'userJoined',
-                  username: message.username
-                }));
+                client.send(
+                  JSON.stringify({
+                    type: "userJoined",
+                    id: id,
+                    username: message.username,
+                    message: `${message.username} joined the chat`,
+                    timestamp: new Date().toISOString(),
+                  })
+                );
               }
             });
             console.log(`${message.username} joined the chat`);
             break;
-            
-          case 'message':
-            const username = clients.get(ws) || 'Anonymous';
+
+          case "message":
+            const username = clients.get(ws) || "Anonymous";
             const messageData = {
-              type: 'message',
-              id: Date.now(),
+              type: "message",
+              id: id,
               username,
               message: message.message,
               timestamp: new Date().toISOString(),
             };
-            
+
             // Broadcast message to all clients
             wss.clients.forEach((client) => {
               if (client.readyState === WebSocket.OPEN) {
@@ -76,21 +82,26 @@ app.prepare().then(() => {
             break;
         }
       } catch (error) {
-        console.error('Error parsing message:', error);
+        console.error("Error parsing message:", error);
       }
     });
 
-    ws.on('close', () => {
-      const username = clients.get(ws) || 'Anonymous';
+    ws.on("close", () => {
+      const username = clients.get(ws) || "Anonymous";
       clients.delete(ws);
-      
+
       // Broadcast user left to all other clients
       wss.clients.forEach((client) => {
         if (client.readyState === WebSocket.OPEN) {
-          client.send(JSON.stringify({
-            type: 'userLeft',
-            username: username
-          }));
+          client.send(
+            JSON.stringify({
+              type: "userLeft",
+              id: Date.now() + Math.random(),
+              username: username,
+              message: `${username} left the chat`,
+              timestamp: new Date().toISOString(),
+            })
+          );
         }
       });
       console.log(`${username} disconnected`);
@@ -101,4 +112,4 @@ app.prepare().then(() => {
     if (err) throw err;
     console.log(`> WebSocket Server Ready on ws://${hostname}:${wsPort}`);
   });
-}); 
+});
